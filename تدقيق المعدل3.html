@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>حاسبة المعدل التراكمي - النسخة المتقدمة</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #34495e;
+            --accent-color: #3498db;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--primary-color);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        h1, h2, h3 {
+            text-align: center;
+            color: var(--primary-color);
+        }
+
+        .section {
+            margin-bottom: 25px;
+            padding: 20px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            background-color: #fff;
+        }
+
+        .flex-row {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+            align-items: flex-end;
+        }
+
+        .input-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input[type="number"], input[type="text"], select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: center;
+        }
+
+        th {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s, transform 0.1s;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-primary { background-color: var(--accent-color); color: white; }
+        .btn-success { background-color: var(--success-color); color: white; }
+        .btn-warning { background-color: var(--warning-color); color: white; }
+        .btn-danger { background-color: var(--danger-color); color: white; }
+
+        .btn-full { width: 100%; font-size: 1.2em; margin-top: 20px; }
+
+        .results {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #ecf0f1;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .result-item {
+            margin-bottom: 10px;
+            font-size: 1.1em;
+            border-bottom: 1px solid #bdc3c7;
+            padding-bottom: 5px;
+        }
+
+        .highlight {
+            color: var(--success-color);
+            font-weight: bold;
+        }
+
+        .saved-configs {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>حاسبة المعدل التراكمي المتقدمة</h1>
+
+    <!-- قسم إدارة النماذج -->
+    <div class="section saved-configs">
+        <h3>إدارة النماذج (القسم والمرحلة)</h3>
+        <div class="flex-row">
+            <div class="input-group">
+                <label>القسم:</label>
+                <input type="text" id="dept_name" placeholder="مثال: هندسة الحاسبات">
+            </div>
+            <div class="input-group">
+                <label>المرحلة:</label>
+                <input type="text" id="stage_name" placeholder="مثال: الثانية">
+            </div>
+            <button class="btn btn-success" onclick="saveConfiguration()">حفظ هذا النموذج</button>
+        </div>
+        <div class="flex-row">
+            <div class="input-group">
+                <label>استرجاع نموذج محفوظ:</label>
+                <select id="saved_list" onchange="loadConfiguration()">
+                    <option value="">-- اختر نموذجاً --</option>
+                </select>
+            </div>
+            <button class="btn btn-danger" onclick="deleteConfiguration()">حذف النموذج المختار</button>
+        </div>
+    </div>
+
+    <div class="section">
+        <label for="year1_gpa">معدل المرحلة الأولى (جاهز):</label>
+        <input type="number" id="year1_gpa" step="0.001" placeholder="0.000">
+    </div>
+
+    <div class="section">
+        <h3>إعداد الكورسات</h3>
+        <div class="flex-row">
+            <div class="input-group">
+                <label>عدد دروس الكورس الأول:</label>
+                <input type="number" id="c1_count" min="1" value="5">
+            </div>
+            <div class="input-group">
+                <label>عدد دروس الكورس الثاني:</label>
+                <input type="number" id="c2_count" min="1" value="5">
+            </div>
+            <button class="btn btn-primary" onclick="generateFields()">توليد الجداول</button>
+        </div>
+    </div>
+
+    <div id="entry_sections" class="hidden">
+        <div class="section">
+            <h2>الكورس الأول</h2>
+            <table id="course1_table">
+                <thead>
+                    <tr>
+                        <th>اسم المادة</th>
+                        <th>الدرجة النهائية</th>
+                        <th>عدد الوحدات</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <div class="section">
+            <h2>الكورس الثاني</h2>
+            <table id="course2_table">
+                <thead>
+                    <tr>
+                        <th>اسم المادة</th>
+                        <th>الدرجة النهائية</th>
+                        <th>عدد الوحدات</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <button class="btn btn-success btn-full" onclick="calculateAll()">حساب المعدلات والنتائج</button>
+    </div>
+
+    <div id="results" class="results">
+        <h2>النتائج التفصيلية</h2>
+        <div id="info_result" class="result-item" style="color: #2980b9; font-weight: bold;"></div>
+        <div id="course1_result" class="result-item"></div>
+        <div id="course2_result" class="result-item"></div>
+        <div id="year2_result" class="result-item"></div>
+        <div id="cumulative_result" class="result-item" style="font-size: 1.4em; border-top: 2px solid #2c3e50; padding-top: 10px;"></div>
+    </div>
+</div>
+
+<script>
+    // تهيئة القائمة عند التحميل
+    window.onload = updateSavedList;
+
+    function generateFields(data = null) {
+        const c1Count = data ? data.c1.length : (parseInt(document.getElementById('c1_count').value) || 0);
+        const c2Count = data ? data.c2.length : (parseInt(document.getElementById('c2_count').value) || 0);
+
+        if (c1Count <= 0 && c2Count <= 0) {
+            alert("يرجى إدخال عدد صحيح للمواد");
+            return;
+        }
+
+        populateTable('course1_table', c1Count, data ? data.c1 : null);
+        populateTable('course2_table', c2Count, data ? data.c2 : null);
+
+        document.getElementById('entry_sections').classList.remove('hidden');
+    }
+
+    function populateTable(tableId, count, items) {
+        const tbody = document.getElementById(tableId).getElementsByTagName('tbody')[0];
+        tbody.innerHTML = '';
+
+        for (let i = 0; i < count; i++) {
+            const row = tbody.insertRow();
+            const itemName = items ? items[i].name : `مادة ${i+1}`;
+            const itemUnits = items ? items[i].units : '';
+            
+            row.innerHTML = `
+                <td><input type="text" class="item-name" value="${itemName}"></td>
+                <td><input type="number" class="grade" step="0.01" placeholder="0.00"></td>
+                <td><input type="number" class="units" step="1" value="${itemUnits}" placeholder="وحدات"></td>
+            `;
+        }
+    }
+
+    function calculateCourse(tableId) {
+        const table = document.getElementById(tableId);
+        const rows = table.getElementsByTagName('tbody')[0].rows;
+        let totalWeight = 0;
+        let totalUnits = 0;
+
+        for (let i = 0; i < rows.length; i++) {
+            const grade = parseFloat(rows[i].querySelector('.grade').value) || 0;
+            const units = parseFloat(rows[i].querySelector('.units').value) || 0;
+            totalWeight += (grade * units);
+            totalUnits += units;
+        }
+
+        return { gpa: totalUnits > 0 ? (totalWeight / totalUnits) : 0, totalUnits, totalWeight };
+    }
+
+    function calculateAll() {
+        const year1Gpa = parseFloat(document.getElementById('year1_gpa').value) || 0;
+        const c1 = calculateCourse('course1_table');
+        const c2 = calculateCourse('course2_table');
+
+        const totalWeightYear2 = c1.totalWeight + c2.totalWeight;
+        const totalUnitsYear2 = c1.totalUnits + c2.totalUnits;
+        const year2Gpa = totalUnitsYear2 > 0 ? (totalWeightYear2 / totalUnitsYear2) : 0;
+        const cumulativeGpa = (year1Gpa * 0.4) + (year2Gpa * 0.6);
+
+        const resultsDiv = document.getElementById('results');
+        resultsDiv.style.display = 'block';
+
+        const dept = document.getElementById('dept_name').value;
+        const stage = document.getElementById('stage_name').value;
+        document.getElementById('info_result').innerText = `التقرير لـ: ${dept || 'غير محدد'} - المرحلة: ${stage || 'غير محدد'}`;
+
+        document.getElementById('course1_result').innerHTML = `<strong>الكورس الأول:</strong> المعدل: <span class="highlight">${c1.gpa.toFixed(3)}</span> | الوحدات: ${c1.totalUnits} | الترجيح: ${c1.totalWeight.toFixed(3)}`;
+        document.getElementById('course2_result').innerHTML = `<strong>الكورس الثاني:</strong> المعدل: <span class="highlight">${c2.gpa.toFixed(3)}</span> | الوحدات: ${c2.totalUnits} | الترجيح: ${c2.totalWeight.toFixed(3)}`;
+        document.getElementById('year2_result').innerHTML = `<strong>المرحلة الحالية:</strong> المعدل: <span class="highlight">${year2Gpa.toFixed(3)}</span> | الوحدات: ${totalUnitsYear2} | الترجيح: ${totalWeightYear2.toFixed(3)}`;
+        document.getElementById('cumulative_result').innerHTML = `<strong>المعدل التراكمي (40% + 60%):</strong> <span class="highlight" style="color: #c0392b;">${cumulativeGpa.toFixed(3)}</span>`;
+        
+        resultsDiv.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // وظائف التخزين
+    function saveConfiguration() {
+        const dept = document.getElementById('dept_name').value.trim();
+        const stage = document.getElementById('stage_name').value.trim();
+        
+        if (!dept || !stage) {
+            alert("يرجى إدخال القسم والمرحلة لحفظ النموذج");
+            return;
+        }
+
+        const config = {
+            dept, stage,
+            year1_gpa: document.getElementById('year1_gpa').value,
+            c1: getTableData('course1_table'),
+            c2: getTableData('course2_table')
+        };
+
+        const key = `gpa_cfg_${dept}_${stage}`;
+        localStorage.setItem(key, JSON.stringify(config));
+        updateSavedList();
+        alert("تم حفظ النموذج بنجاح!");
+    }
+
+    function getTableData(tableId) {
+        const rows = document.getElementById(tableId).getElementsByTagName('tbody')[0].rows;
+        const data = [];
+        for (let i = 0; i < rows.length; i++) {
+            data.push({
+                name: rows[i].querySelector('.item-name').value,
+                units: rows[i].querySelector('.units').value
+            });
+        }
+        return data;
+    }
+
+    function updateSavedList() {
+        const select = document.getElementById('saved_list');
+        select.innerHTML = '<option value="">-- اختر نموذجاً --</option>';
+        
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key.startsWith('gpa_cfg_')) {
+                const config = JSON.parse(localStorage.getItem(key));
+                const option = document.createElement('option');
+                option.value = key;
+                option.text = `${config.dept} - المرحلة ${config.stage}`;
+                select.appendChild(option);
+            }
+        }
+    }
+
+    function loadConfiguration() {
+        const key = document.getElementById('saved_list').value;
+        if (!key) return;
+
+        const config = JSON.parse(localStorage.getItem(key));
+        document.getElementById('dept_name').value = config.dept;
+        document.getElementById('stage_name').value = config.stage;
+        document.getElementById('year1_gpa').value = config.year1_gpa;
+        
+        generateFields(config);
+    }
+
+    function deleteConfiguration() {
+        const key = document.getElementById('saved_list').value;
+        if (!key) {
+            alert("يرجى اختيار نموذج لحذفه");
+            return;
+        }
+        if (confirm("هل أنت متأكد من حذف هذا النموذج؟")) {
+            localStorage.removeItem(key);
+            updateSavedList();
+            alert("تم الحذف");
+        }
+    }
+</script>
+
+</body>
+</html>
